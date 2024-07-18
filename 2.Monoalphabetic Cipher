@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <string.h>
+
+void monoalphabeticCipher(char str[], char key[]) {
+    int i;
+    for (i = 0; i < strlen(str); i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            str[i] = tolower(key[str[i] - 'a']);
+        } else if (str[i] >= 'A' && str[i] <= 'Z') {
+            str[i] = toupper(key[str[i] - 'A']);
+        }
+    }
+}
+
+int main() {
+    char str[100];
+    char key[] = "xyzabc";
+    printf("Enter the string: ");
+    fgets(str, sizeof(str), stdin);
+    str[strlen(str) - 1] = '\0'; // remove the newline character
+    printf("Original string: %s\n", str);
+    monoalphabeticCipher(str, key);
+    printf("Encrypted string: %s\n", str);
+    return 0;
+}

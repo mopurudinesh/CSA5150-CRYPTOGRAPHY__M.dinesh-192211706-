@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <string.h>
+
+// Function to generate the 5x5 matrix
+void generateMatrix(char key[], char matrix[5][5]) {
+    int i, j, k = 0;
+    char alphabet[] = "abcdefghjklmnopqrstuvwxyz";
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            while (k < strlen(key) && strchr(alphabet, tolower(key[k]))!= NULL) {
+                k++;
+            }
+            matrix[i][j] = tolower(alphabet[k++]);
+        }
+    }
+}
+
+
+void findPosition(char matrix[5][5], char ch, int *row, int *col) {
+    int i, j;
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            if (matrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+
+void playfairCipher(char str[], char key[]) {
+    char matrix[5][5];
+    generateMatrix(key, matrix);
+    int i, len = strlen(str);
+    for (i = 0; i < len; i += 2) {
+        int row1, col1, row2, col2;
+        findPosition(matrix, str[i], &row1, &col1);
+        findPosition(matrix, str[i + 1], &row2, &col2);
+        if (row1 == row2) {
+            str[i] = matrix[row1][(col1 + 1) % 5];
+            str[i + 1] = matrix[row2][(col2 + 1) % 5];
+        } else if (col1 == col2) {
+           

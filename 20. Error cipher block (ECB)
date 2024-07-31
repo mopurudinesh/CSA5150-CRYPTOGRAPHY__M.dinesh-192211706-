@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/aes.h>
+
+// Function to perform AES encryption in ECB mode
+void aes_ecb_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key) {
+    AES_KEY aes_key;
+    AES_set_encrypt_key(key, 128, &aes_key);
+
+    for (size_t i = 0; i < length; i += 16) {
+        AES_encrypt(input + i, output + i, &aes_key);
+    }
+}
+
+// Function to perform AES encryption in CBC mode
+void aes_cbc_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key, const unsigned char *iv) {
+    AES_KEY aes_key;
+    AES_set_encrypt_key(key, 128, &aes_key);
+
+    unsigned char ivec[16];
+    memcpy(ivec, iv, 16);
+
+    for (size_t i = 0; i < length; i += 16) {
+        for (int j = 0; j < 16; j++) {
+            input[i + j] ^= ivec[j];
+        }
+        AES_encrypt(input + i, output + i, &aes_key);
+        memcpy(ivec, output + i, 16);
+    }
+}
+
+int main() {
+    const unsigned char key[16] = "0123456789012345"; // 128-bit key
+    const unsigned char iv[16] = "0123456789012345"; // 128-bit IV
+    const unsigned char input[] = "Hello, World! This is a test.";
+    unsigned char output_ecb[sizeof(input)];
+    unsigned char output_cbc[sizeof(input)];
+
+    aes_ecb_encrypt(input, output_ecb, sizeof(input), key);
+    aes_cbc_encrypt(input, output_cbc, sizeof(input), key, iv);
+
+    // Introduce an error in the first block of the ciphertext
+    output_ecb[0] ^= 0x01;
+    output_cbc[0] ^= 0x01;
+
+    // Decrypt and print the results
+    unsigned char decrypted_ecb[sizeof(input)];
+    unsigned char decrypted_cbc[sizeof(input)];
+
+    for (size_t i = 0; i < sizeof(input); i += 16) {
+        AES_decrypt(output_ecb + i, decrypted_ecb + i, &aes_key);
+        AES_decrypt(output_cbc + i, decrypted_cbc + i, &aes_key);
+    }
+
+    printf("ECB Decrypted: %s\n", decrypted_ecb);
+    printf("CBC Decrypted: %s\n", decrypted_cbc);
+
+    return 0;
+}

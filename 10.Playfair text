@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <string.h>
+
+// Function to remove spaces from a string
+void removeSpaces(char *str) {
+    int i, j, len = strlen(str);
+    for (i = 0; i < len; i++) {
+        if (str[i] == ' ') {
+            for (j = i; j < len - 1; j++) {
+                str[j] = str[j + 1];
+            }
+            len--;
+            i--;
+        }
+    }
+}
+
+// Function to convert a string to uppercase
+void toUpperCase(char *str) {
+    int i, len = strlen(str);
+    for (i = 0; i < len; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            str[i] = str[i] - 32;
+        }
+    }
+}
+
+// Function to prepare the plaintext for encryption
+void preparePlaintext(char *str) {
+    int i, len = strlen(str);
+    for (i = 0; i < len - 1; i++) {
+        if (str[i] == str[i + 1]) {
+            for (int j = len; j > i + 1; j--) {
+                str[j] = str[j - 1];
+            }
+            str[i + 1] = 'X';
+            len++;
+        }
+    }
+    if (len % 2 != 0) {
+        str[len] = 'X';
+    }
+}
+
+// Function to find the position of a character in the matrix
+void findPosition(char matrix[5][5], char ch, int *row, int *col) {
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (matrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+// Function to encrypt a pair of characters
+void encryptPair(char matrix[5][5], char ch1, char ch2, char *encrypted) {
+    int row1, col1, row2, col2;
+    findPosition(matrix, ch1, &row1, &col1);
+    findPosition(matrix, ch2, &row2, &col2);
+
+    if (row1 == row2) {
+        encrypted[0] = matrix[row1][(col1 + 1) % 5];
+        encrypted[1] = matrix[row2][(col2 + 1) % 5];
+    } else if (col1 == col2) {
+        encrypted[0] = matrix[(row1 + 1) % 5][col1];
+        encrypted[1] = matrix[(row2 + 1) % 5][col2];
+    } else {
+        encrypted[0] = matrix[row1][col2];
+        encrypted[1] = matrix[row2][col1];
+    }
+}
+
+int main() {
+    char matrix[5][5] = {
+        {'M', 'F', 'H', 'I', 'J'},
+        {'U', 'N', 'O', 'P', 'Q'},
+        {'Z', 'V', 'W', 'X', 'Y'},
+        {'E', 'L', 'A', 'R', 'G'},
+        {'D', 'S', 'T', 'B', 'C'}
+    };
+
+    char plaintext[] = "Must see you over Cadogan West. Coming at once.";
+    removeSpaces(plaintext);
+    toUpperCase(plaintext);
+    preparePlaintext(plaintext);
+
+    int len = strlen(plaintext);
+    char encrypted[len];
+
+    for (int i = 0; i < len; i += 2) {
+        encryptPair(matrix, plaintext[i], plaintext[i + 1], &encrypted[i]);
+    }
+
+    printf("Encrypted text: %s\n", encrypted);
+
+    return 0;
+}

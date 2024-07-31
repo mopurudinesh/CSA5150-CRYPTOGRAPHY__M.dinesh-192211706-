@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/des.h>
+
+// Function to perform 3DES encryption in CBC mode
+void triple_des_cbc_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key, const unsigned char *iv) {
+    DES_key_schedule ks1, ks2, ks3;
+    DES_set_key((const_DES_cblock *)key, &ks1);
+    DES_set_key((const_DES_cblock *)(key + 8), &ks2);
+    DES_set_key((const_DES_cblock *)(key + 16), &ks3);
+
+    unsigned char *p = output;
+    const unsigned char *q = input;
+
+    // Initialize CBC mode
+    unsigned char ivec[8];
+    memcpy(ivec, iv, 8);
+
+    while (length >= 8) {
+        // XOR input block with IV
+        for (int i = 0; i < 8; i++) {
+            p[i] = q[i] ^ ivec[i];
+        }
+
+        // Encrypt block with 3DES
+        DES_encrypt3(p, &ks1, &ks2, &ks3);
+
+        // Update IV for next block
+        memcpy(ivec, p, 8);
+
+        p += 8;
+        q += 8;
+        length -= 8;
+    }
+
+    // Pad remaining bytes (if any)
+    if (length > 0) {
+        for (int i = 0; i < length; i++) {
+            p[i] = q[i] ^ ivec[i];
+        }
+        DES_encrypt3(p, &ks1, &ks2, &ks3);
+    }
+}
+
+int main() {
+    const unsigned char key[24] = "012345678901234567890123"; // 192-bit key
+    const unsigned char iv[8] = "01234567"; // 64-bit IV
+    const unsigned char input[] = "Hello, World!";
+    unsigned char output[sizeof(input)];
+
+    triple_des_cbc_encrypt(input, output, sizeof(input), key, iv);
+
+    printf("Encrypted output: ");
+    for (int i = 0; i < sizeof(output); i++) {
+        printf("%02x", output[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

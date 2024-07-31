@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include <string.h>
+
+void polyalphabeticCipher(char str[], char key[]) {
+    int i, j, len = strlen(str);
+    char alphabet[] = "abcdefghijklmnopqrstuvwxyz";
+    for (i = 0; i < len; i++) {
+        char shift = key[i % strlen(key)] - 'a';
+        for (j = 0; j < 26; j++) {
+            if (str[i] == alphabet[j]) {
+                str[i] = alphabet[(j + shift) % 26];
+                break;
+            }
+        }
+    }
+}
+
+int main() {
+    char str[100];
+    char key[] = "secretkey";
+    printf("Enter the string: ");
+    fgets(str, sizeof(str), stdin);
+    str[strlen(str) - 1] = '\0'; // remove the newline character
+    printf("Original string: %s\n", str);
+    polyalphabeticCipher(str, key);
+    printf("Encrypted string: %s\n", str);
+    return 0;
+}

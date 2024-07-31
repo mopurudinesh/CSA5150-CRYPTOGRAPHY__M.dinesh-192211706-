@@ -1,0 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/aes.h>
+
+// Function to pad the plaintext to a multiple of the block size
+void pad_plaintext(unsigned char *plaintext, size_t *length, int block_size) {
+    int padding_needed = block_size - (*length % block_size);
+    if (padding_needed == 0) {
+        padding_needed = block_size;
+    }
+
+    unsigned char *padded_plaintext = malloc(*length + padding_needed);
+    memcpy(padded_plaintext, plaintext, *length);
+
+    padded_plaintext[*length] = 0x80; // 1 bit
+    for (int i = 1; i < padding_needed; i++) {
+        padded_plaintext[*length + i] = 0x00; // zero bits
+    }
+
+    *length += padding_needed;
+    free(plaintext);
+    plaintext = padded_plaintext;
+}
+
+// Function to perform AES encryption in ECB mode
+void aes_ecb_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key) {
+    AES_KEY aes_key;
+    AES_set_encrypt_key(key, 128, &aes_key);
+
+    for (size_t i = 0; i < length; i += 16) {
+        AES_encrypt(input + i, output + i, &aes_key);
+    }
+}
+
+// Function to perform AES encryption in CBC mode
+void aes_cbc_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key, const unsigned char *iv) {
+    AES_KEY aes_key;
+    AES_set_encrypt_key(key, 128, &aes_key);
+
+    unsigned char ivec[16];
+    memcpy(ivec, iv, 16);
+
+    for (size_t i = 0; i < length; i += 16) {
+        for (int j = 0; j < 16; j++) {
+            input[i + j] ^= ivec[j];
+        }
+        AES_encrypt(input + i, output + i, &aes_key);
+        memcpy(ivec, output + i, 16);
+    }
+}
+
+// Function to perform AES encryption in CFB mode
+void aes_cfb_encrypt(const unsigned char *input, unsigned char *output, size_t length, const unsigned char *key, const unsigned char *iv) {
+    AES_KEY aes_key;
+    AES_set_encrypt_key(key, 128, &aes_key);
+
+    unsigned char ivec[16];
+    memcpy(ivec, iv, 16);
+
+    for (size_t i = 0; i < length; i += 16) {
+        AES_encrypt(ivec, ivec, &aes_key);
+        for (int j = 0; j < 16; j++) {
+            output[i + j] = input[i + j] ^ ivec[j];
+        }
+    }
+}
+
+int main() {
+    const unsigned char key[16] = "0123456789012345"; // 128-bit key
+    const unsigned char iv[16] = "0123456789012345"; // 128-bit IV
+    unsigned char input[] = "Hello, World! This is a test.";
+    size_t input_length = strlen(input);
+
+    // Pad the plaintext
+    pad_plaintext(input, &input_length, 16);
+
+    unsigned char output_ecb[input_length];
+    unsigned char output_cbc[input_length];
+    unsigned char output_cfb[input_length];
+
+    aes_ecb_encrypt(input, output_ecb, input_length, key);
+    aes_cbc_encrypt(input, output_cbc, input_length, key, iv);
+    aes_cfb_encrypt(input, output_cfb, input_length, key, iv);
+
+    // Print the encrypted outputs
+    printf("ECB Encrypted: ");
+    for (int i = 0; i < input_length; i++) {
+        printf("%02x", output_ecb[i]);
+    }
+    printf("\n");
+
+    printf("CBC Encrypted: ");
+    for (int i = 0; i < input_length; i++) {
+        printf("%02x", output_cbc[i]);
+    }
+    printf("\n");
+
+    printf("CFB Encrypted: ");
+    for (int i = 0; i < input_length; i++) {
+        printf("%02x", output_cfb[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
